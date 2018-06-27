@@ -1,0 +1,36 @@
+---
+title: "Read HCDN Sites"
+author: "Dave Holtschlag and Alex Totten"
+date: "`r format(Sys.time(), '%A %B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(xlsx)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read HCDN-2009_Station_Info.xlsx
+
+
+```{r read_hcdn}
+
+file.path <- paste0('C:\\Home\\Projects\\FHWA_flood\\data\\','HCDN-2009_Station_Info.xlsx')
+
+df <- read.xlsx(file.path, sheetName = 'Sheet1', 
+                colClasses = c(rep('character',4),'numeric','character',rep('numeric',2),
+                               rep('character',2), rep('numeric',3)) ) 
+head(df)
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
