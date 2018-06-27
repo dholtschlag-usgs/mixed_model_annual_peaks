@@ -7,6 +7,11 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(xlsx)
+library(tidyverse)
+library(ggthemes)
+library(ggmap)
+library(maps)
+library(mapdata)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -20,17 +25,73 @@ file.path <- paste0('C:\\Home\\Projects\\FHWA_flood\\data\\','HCDN-2009_Station_
 df <- read.xlsx(file.path, sheetName = 'Sheet1', 
                 colClasses = c(rep('character',4),'numeric','character',rep('numeric',2),
                                rep('character',2), rep('numeric',3)) ) 
+
+if( length(df$STATION.ID < 8)) {
+   df$STATION.ID = paste0('0',df$STATION.ID)
+}
+
+df$AGGECOREGION <- as.factor(df$AGGECOREGION)
+df$STATION.NAME <- as.character(df$STATION.NAME)
+df$STATE        <- as.character(df$STATE)
+
 head(df)
 
+summary(df)
+```
+
+
+
+```{r bar_region, fig.cap = 'Figure 1. Frequency of Streamgages in Aggregated Ecoregions'}
+
+df %>%
+   # group_by(AGGECOREGION) %>% 
+   # summarize(STATION.REGION = n_distinct(STATION.ID)) %>% 
+   ggplot( aes( x = AGGECOREGION)) +
+   geom_bar() +
+   coord_flip() +
+   labs( y =  'Number of streamgages in region' ) +
+   theme_few()
 
 ```
 
-## Including Plots
+## Map distribution of HCDN Streamgages in CONUS
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r map_conus, fig.height = 7, fig.width = 9, fig.cap = 'Figure 2. Distribution of Hydro-Climate Network Data Streamgages in the conterminuous United States'}
+
+# filter out aggecoregion not in CONUS
+df_conus <- df %>% 
+   dplyr::filter(!(AGGECOREGION %in% c('PuertoRico', 'Hawaii', 'Alaska')) )
+
+usa <- map_data('usa')
+
+usa %>% 
+   ggplot() +
+   geom_polygon(aes(x=long, y = lat, group = group), fill = NA, color = 'black') +
+   geom_point( data = df_conus, aes( x = LONG_GAGE, y = LAT_GAGE, color = AGGECOREGION))    +
+   theme_few() + 
+   coord_map(projection = "mercator") +
+   theme( legend.position = 'bottom') +
+   labs( x = 'Longitude', y = 'Latitude')
+
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Years of Flow Record
+
+
+
+```{r rec_len, fig.cap = 'Figure 4. Distribution of drainage areas upstream from streamgages'}
+
+df_conus %>%
+   ggplot( aes( x = AGGECOREGION, y = DRAIN_SQKM)) +
+   geom_violin( ) +
+   geom_boxplot( width = 0.2, color = 'blue' ) +
+   coord_flip() +
+   labs( y =  'Drainage area upstream from streamgage, in square kilometers' ) +
+   theme_few() + 
+   scale_y_continuous( trans = 'log10', breaks = c(10, 100, 1000, 10000))
+
+```
+
+```
